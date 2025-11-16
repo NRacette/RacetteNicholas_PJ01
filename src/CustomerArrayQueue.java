@@ -1,14 +1,11 @@
 /**
- * Description: Implements a **thread-safe, blocking** circular queue 
- * of Customer objects using a dynamic array.
- * This class provides basic queue operations (enqueue, dequeue).
- * - enqueue() will add an item and notify any waiting threads.
- * - dequeue() will wait() if the queue is empty, until an item
- * is added by another thread.
+ * Description: A queue of Customer objects using an array. This class provides basic queue operations.
+ * enqueue() will add an item and notify any waiting threads.
+ * dequeue() will wait() if the queue is empty, until an item is added by another thread.
  *
  * @author Nicholas Racette
  * @contact: Nick.Racette@century.edu
- * @since: 11/15/2025
+ * @since: 11/16/2025
  *
  * Course: CSCI 2082-70
  * Institution: Century College
@@ -17,7 +14,7 @@
 public class CustomerArrayQueue {
     
     // PROPERTIES
-    private Customer[] data; // Holds Customer objects, not ints
+    private Customer[] data; // Holds Customer objects
     private int front;
     private int rear;
     private int manyItems;
@@ -35,7 +32,7 @@ public class CustomerArrayQueue {
     /**
      * Constructor with specified capacity.
      *
-     * @param initialCapacity The initial size of the internal array.
+     * @param initialCapacity The initial size of the array.
      */
     public CustomerArrayQueue(int initialCapacity) {
         if (initialCapacity <= 0) {
@@ -45,7 +42,7 @@ public class CustomerArrayQueue {
         this.manyItems = 0;
     }
 
-    // === CORE THREAD-SAFE METHODS ===
+    // MEMBER METHODS
 
     /**
      * Adds a new item to the rear of the queue (thread-safe).
@@ -65,31 +62,30 @@ public class CustomerArrayQueue {
             this.front = 0;
             this.rear = 0;
         } else {
-            // Use nextIndex to wrap around if needed
+            // Move rear to the next index
             this.rear = nextIndex(this.rear);
         }
 
-        // Add the new item
+        // Add the new customer
         this.data[this.rear] = item;
         this.manyItems++;
 
-        // **IMPORTANT:** Wake up any threads that are wait()ing on this queue
+        //Start up any threads that are wait() on this queue
         this.notifyAll();
     }
 
     /**
-     * Removes and returns the item from the front of the queue (thread-safe).
-     * **This is a blocking method.** If the queue is empty, this thread
-     * will wait() until another thread calls enqueue().
+     * Removes and returns the item from the front of the queue.
+     * If the queue is empty, this thread will wait() until another thread enqueue().
+     * Synchronized for working with threads.
      *
-     * @return The Customer at the front of the queue.
-     * @throws InterruptedException if the thread is interrupted while waiting.
+     * @return Customer at the front of the queue.
+     * @throws InterruptedException If the thread is interrupted while waiting.
      */
     public synchronized Customer dequeue() throws InterruptedException {
-        // **IMPORTANT:** Use a while loop to wait.
-        // If the queue is empty, release the lock and wait.
+        // Check if the queue is empty
         while (this.manyItems == 0) {
-            // System.out.println("Queue is empty, thread is waiting...");
+
             this.wait();
             // When woken up, the loop re-checks if manyItems > 0
         }
@@ -105,7 +101,8 @@ public class CustomerArrayQueue {
     }
 
     /**
-     * Returns the number of items in the queue (thread-safe).
+     * Returns the number of items in the queue.
+     * Synchronized for working with threads.
      *
      * @return The count of items.
      */
@@ -113,17 +110,17 @@ public class CustomerArrayQueue {
         return this.manyItems;
     }
 
-    // === PRIVATE HELPER METHODS ===
-
     /**
-     * Calculates the next index in the circular array.
-     * (Doesn't need to be synchronized as it's only called by
-     * synchronized methods).
+     * Moves the next index in the array queue.
+     * 
+     * @param index The current index.
+     * @return The next index.
      */
-    private int nextIndex(int index) {
+    public int nextIndex(int index) {
         index = index + 1;
+        // Move to front if we reach the end of the array
         if (index == this.data.length) {
-            return 0; // Wrap around to the start
+            return 0; 
         } 
         else {
             return index;
@@ -131,15 +128,16 @@ public class CustomerArrayQueue {
     }
 
     /**
-     * Resizes the internal array to a new, larger capacity.
-     * (Doesn't need to be synchronized as it's only called by
-     * synchronized methods).
+     * Resizes the array to a new, larger capacity.
+     * Copies existing items to the new array.
+     * 
+     * @param minCapacity The minimum required capacity.
      */
-    private void increaseCapacity(int minCapacity) {
+    public void increaseCapacity(int minCapacity) {
         Customer[] biggerArray;
 
         if (this.data.length >= minCapacity) {
-            return; // No change needed
+            return;
         } 
         
         biggerArray = new Customer[minCapacity];

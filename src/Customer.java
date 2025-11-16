@@ -1,14 +1,13 @@
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Description:
- * Represents a single grocery store customer. This is a simple data
- * class that holds a unique ID. The ID is generated automatically
- * by a static, thread-safe counter in the constructor.
+ * Description: Class implementing a store customer. 
+ * Class holds a unique ID for each customer. The ID gets generated automatically
+ * by a static AtomicInteger object, in the constructor.
  *
  * @author Nicholas Racette
  * @contact: Nick.Racette@century.edu
- * @since: 11/15/2025
+ * @since: 11/16/2025
  *
  * Course: CSCI 2082-70
  * Institution: Century College
@@ -16,13 +15,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Customer {
 
-    // === PROPERTIES ===
+    // PROPERTIES
     private String id;
     
-    /** Thread-safe static counter to ensure unique customer IDs */
+    // Static atomic integer to generate unique IDs works with multiple threads
     private static AtomicInteger idGenerator = new AtomicInteger(0);
 
-    // === CONSTRUCTOR ===
+    // CONSTRUCTOR
     
     /**
      * Constructs a new Customer.
@@ -30,19 +29,23 @@ public class Customer {
      */
     public Customer() {
         // Increment the atomic generator and format it as a String
-        this.id = String.format("C%04d", idGenerator.incrementAndGet());
+        this.id = String.format("%03d", idGenerator.incrementAndGet());
     }
-
-    // === GETTERS ===
 
     /**
      * Gets the customer's unique ID.
+     * 
      * @return The customer's ID string.
      */
     public String getId() {
         return id;
     }
 
+    /**
+     * Returns a string id of the Customer.
+     * 
+     * @return A string with the customer's ID.
+     */
     @Override
     public String toString() {
         return "Customer{id='" + id + "'}";
