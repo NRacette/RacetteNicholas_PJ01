@@ -1,14 +1,23 @@
 import java.util.Random;
+
 /**
  * Manages and runs the entire grocery store simulation.
  * Contains the main loop, all simulation state, constants, and statistics.
  * This class handles customer arrivals, line management, and result reporting.
+ *
+ * @author Nicholas Racette
+ * @contact: Nick.Racette@century.edu
+ * @since: 11/15/2025
+ *
+ * Course: CSCI 2082-70
+ * Institution: Century College
+ * Instructor: Mathew Nyamgawa
  */
 public class Simulation {
 
     // === SIMULATION CONSTANTS ===
     public final int SIMULATION_DURATION = 10000; // Total time steps to run
-    public final int NUM_LINES = 5;               //[cite_start] As required by the project [cite: 8]
+    public final int NUM_LINES = 5;              // As required by the project
     public final int MAX_CUSTOMERS = 20000;     // Max customers for the allCustomers array
     public final double ARRIVAL_PROBABILITY = 0.30; // 30% chance of arrival per time step
 
@@ -21,19 +30,19 @@ public class Simulation {
     public final int MAX_CHECK_INTERVAL = 120;  // 2 minutes
 
     // --- Line Behavior Constants ---
-    // Customer will "balk" (not join) if all lines are this long [cite: 12]
+   // Customer will "balk" (not join) if all lines are this long 
     public final int BALK_LINE_LENGTH = 10;
 
     // === SIMULATION STATE ===
     private CashierLine[] lines;
-    private Customer[] allCustomers;
-    private int customerCount;
-    private Random rand;
+    private Customer[] allCustomers; // Master array holding all customer objects
+    private int customerCount;       // Counter for total customers created
+    private Random rand;             // Random number generator
 
     // === STATISTICS ===
     private int totalCustomersServed;
     private int totalCustomersBalked;
-    private int totalCustomersReneged; //[cite_start] Left line due to patience [cite: 13]
+    private int totalCustomersReneged;// Left line due to patience 
     private long totalWaitTime;
 
     /**
@@ -73,7 +82,7 @@ public class Simulation {
             // 1. New customers arrive and pick lines
             handleCustomerArrival(currentTime);
 
-            // 2. Customers in line check patience and switch lines [cite: 13, 14]
+           // 2. Customers in line check patience and switch lines 
             handleInLineActions(currentTime);
 
             // 3. Cashiers serve customers at the front of the line
@@ -88,31 +97,57 @@ public class Simulation {
 
     /**
      * Step 1: (Potentially) create a new customer and add them to a line.
-     * Handles customer creation and "balking" logic.
+     * Delegates complex logic to helper methods.
      *
      * @param currentTime The current simulation time step.
      */
     private void handleCustomerArrival(int currentTime) {
+        // Check if a customer arrives based on probability
         if (rand.nextDouble() > ARRIVAL_PROBABILITY) {
             return; // No customer arrives this step
         }
 
+        // Check if simulation has reached its customer capacity
         if (customerCount >= MAX_CUSTOMERS) {
             System.out.println("WARN: Max customer limit reached. No new arrivals.");
             return;
         }
 
-        // Create the new customer with random properties
+        // 1. Create the customer
+        Customer newCustomer = createNewCustomer(currentTime, customerCount);
+
+        // 2. Find the best line
+        int chosenLineIndex = findShortestLineIndex();
+
+        // 3. Place them (or handle balking)
+        placeCustomer(newCustomer, chosenLineIndex, currentTime);
+    }
+
+    /**
+     * Creates a new customer with randomized properties.
+     *
+     * @param currentTime The arrival time (and current time).
+     * @param customerId The new customer's unique ID.
+     * @return A newly constructed Customer object.
+     */
+    private Customer createNewCustomer(int currentTime, int customerId) {
         int serviceTime = rand.nextInt(MAX_SERVICE_TIME - MIN_SERVICE_TIME + 1) + MIN_SERVICE_TIME;
         int maxWait = rand.nextInt(MAX_MAX_WAIT - MIN_MAX_WAIT + 1) + MIN_MAX_WAIT;
         int checkInterval = rand.nextInt(MAX_CHECK_INTERVAL - MIN_CHECK_INTERVAL + 1) + MIN_CHECK_INTERVAL;
 
-        Customer newCustomer = new Customer(customerCount, currentTime, serviceTime, maxWait, checkInterval);
+        return new Customer(customerId, currentTime, serviceTime, maxWait, checkInterval);
+    }
 
-        // Find the shortest line for the customer [cite: 9]
-        int chosenLineIndex = findShortestLineIndex();
-
-        // Check for "Balking" (avoiding long lines) [cite: 12]
+    /**
+     * Places a customer in their chosen line, or handles balking.
+     * Increments customerCount if the customer successfully joins a line.
+     *
+     * @param newCustomer The customer to place.
+     * @param chosenLineIndex The index of the line they chose.
+     * @param currentTime The current simulation time.
+     */
+    private void placeCustomer(Customer newCustomer, int chosenLineIndex, int currentTime) {
+       // Check for "Balking" (avoiding long lines) 
         if (lines[chosenLineIndex].size() >= BALK_LINE_LENGTH) {
             totalCustomersBalked++;
             // Don't add customer to allCustomers, they left immediately
@@ -127,57 +162,93 @@ public class Simulation {
         newCustomer.setLineIndex(chosenLineIndex);
         newCustomer.setTimeEnteredLine(currentTime);
 
-        customerCount++; // Increment *after* using customerCount as the ID
+        // Increment *after* using customerCount as the ID
+        customerCount++; 
     }
+
 
     /**
      * Step 2: Check all customers in lines for patience or line-switching.
-     * This method iterates through every customer in every line.
+     * Iterates through each line and each customer, rebuilding the queue
+     * with only the customers who stay.
      *
      * @param currentTime The current simulation time step.
      */
     private void handleInLineActions(int currentTime) {
         for (int i = 0; i < NUM_LINES; i++) {
             IntArrayQueue currentQueue = lines[i].getCustomerQueue();
+            // Create a temporary queue to hold customers who stay
             IntArrayQueue tempQueue = new IntArrayQueue(currentQueue.capacity());
             int lineSize = currentQueue.size();
 
             // Iterate through each customer in the line *without* breaking the queue
             for (int j = 0; j < lineSize; j++) {
+                // Get customer from the front
                 int custId = currentQueue.dequeue();
                 Customer c = allCustomers[custId];
-                boolean hasLeftOrSwitched = false;
 
-                // Check for "Reneging" (leaving line due to patience) [cite: 13]
-                if (c.hasExceededPatience(currentTime)) {
-                    totalCustomersReneged++;
-                    c.setLineIndex(-1); // Mark as out of line
-                    hasLeftOrSwitched = true; // Don't re-enqueue
-
-                // Check for "Jockeying" (switching lines) [cite: 14, 15]
-                } else if (c.shouldCheckOtherLine(currentTime)) {
-                    int bestLineIndex = findShortestLineIndex();
-                    
-                    // Switch if the *new* line is shorter than the *current* one
-                    if (bestLineIndex != i && lines[bestLineIndex].size() < lines[i].size()) {
-                        lines[bestLineIndex].addCustomer(c.getId()); // Add to new line
-                        c.setLineIndex(bestLineIndex);
-                        c.setTimeEnteredLine(currentTime); // Reset wait time
-                        hasLeftOrSwitched = true; // Left this line
-                    }
-                    c.scheduleNextCheck(currentTime);
+               // Check for "Reneging" (leaving line) 
+                if (handleCustomerReneging(c, currentTime)) {
+                    continue; // Customer left, do not re-enqueue
                 }
 
-                // If they didn't leave or switch, put them back in line
-                if (!hasLeftOrSwitched) {
-                    tempQueue.enqueue(custId);
+               // Check for "Jockeying" (switching lines) 
+                if (handleCustomerJockeying(c, i, currentTime)) {
+                    continue; // Customer switched, do not re-enqueue
                 }
+
+                // If they didn't leave or switch, put them back in the temp queue
+                tempQueue.enqueue(custId);
             }
+            
             // The original queue is now empty.
             // Replace it with the tempQueue holding all customers who stayed.
             lines[i].setCustomerQueue(tempQueue);
         }
     }
+
+    /**
+     * Checks if a customer has exceeded their patience and leaves the line.
+     *
+     * @param c The customer to check.
+     * @param currentTime The current simulation time.
+     * @return true if the customer left (reneged), false otherwise.
+     */
+    private boolean handleCustomerReneging(Customer c, int currentTime) {
+        if (c.hasExceededPatience(currentTime)) {
+            totalCustomersReneged++;
+            c.setLineIndex(-1); // Mark as out of line
+            return true; // Customer left
+        }
+        return false; // Customer stayed
+    }
+
+    /**
+     * Checks if a customer should look for a shorter line and switches them.
+     *
+     * @param c The customer to check.
+     * @param currentLineIndex The index of the customer's current line.
+     * @param currentTime The current simulation time.
+     * @return true if the customer switched (jockeyed), false otherwise.
+     */
+    private boolean handleCustomerJockeying(Customer c, int currentLineIndex, int currentTime) {
+        if (c.shouldCheckOtherLine(currentTime)) {
+            // Schedule the next check, regardless of whether they switch
+            c.scheduleNextCheck(currentTime);
+            
+            int bestLineIndex = findShortestLineIndex();
+            
+            // Switch if the *new* line is shorter than the *current* one
+            if (bestLineIndex != currentLineIndex && lines[bestLineIndex].size() < lines[currentLineIndex].size()) {
+                lines[bestLineIndex].addCustomer(c.getId()); // Add to new line
+                c.setLineIndex(bestLineIndex);
+                c.setTimeEnteredLine(currentTime); // Reset wait time
+                return true; // Left this line
+            }
+        }
+        return false; // Did not switch
+    }
+
 
     /**
      * Step 3: Tell each cashier to process one customer if they are ready.
@@ -201,7 +272,7 @@ public class Simulation {
 
     /**
      * Finds the index of the shortest line.
-     * If lines are equal, picks the first available one (lowest index)[cite: 10].
+     *If lines are equal, picks the first available one (lowest index).
      *
      * @return The index (0-4) of the shortest line.
      */
@@ -219,7 +290,7 @@ public class Simulation {
     }
 
     /**
-     * Prints the final simulation statistics in an attractive format[cite: 32].
+     *Prints the final simulation statistics in an attractive format.
      */
     private void printResults() {
         System.out.println("\n--- Simulation Results ---");
@@ -248,5 +319,4 @@ public class Simulation {
         }
         System.out.println("Total customers left in lines: " + totalRemaining);
     }
-
 }

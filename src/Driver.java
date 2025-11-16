@@ -3,8 +3,8 @@
  * Due Date: [Due Date]
  * * Description:
  * This program drives a discrete-event simulation of cashier lines
- * [cite_start]at a grocery store[cite: 8]. It follows the objective of using
- * [cite_start]fundamental data structures (like an ArrayQueue) to solve a problem[cite: 4, 17].
+ * at a grocery store. It follows the objective of using
+ * fundamental data structures (like an ArrayQueue) to solve a problem.
  * * The main method simply creates and runs a Simulation object.
  */
 public class Driver {
@@ -17,7 +17,7 @@ public class Driver {
      */
     public static void main(String[] args) {
         System.out.println("--- Simulation Starting ---");
-        System.out.println("Simulator run by: [Your Name]"); // [cite: 33]
+        System.out.println("Simulator run by: [Your Name]"); 
 
         // 1. Create a new simulation object
         Simulation grocerySim = new Simulation();

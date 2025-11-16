@@ -1,8 +1,16 @@
     
-    /**
+/**
  * Represents a single cashier line in the simulation.
  * It holds a queue of customer IDs and manages the cashier's busy status.
- * [cite_start]This class wraps the IntArrayQueue[cite: 17].
+ * This class wraps the IntArrayQueue.
+ *
+ * @author Nicholas Racette
+ * @contact: Nick.Racette@century.edu
+ * @since: 11/15/2025
+ *
+ * Course: CSCI 2082-70
+ * Institution: Century College
+ * Instructor: Mathew Nyamgawa
  */
 public class CashierLine {
 

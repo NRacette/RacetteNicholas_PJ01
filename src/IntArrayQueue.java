@@ -1,29 +1,53 @@
 import java.util.NoSuchElementException;
-
+/**
+ * Description: Implements a circular queue of integers using a dynamic array.
+ * This class provides basic queue operations (enqueue, dequeue, peek)
+ * and automatically handles resizing when full.
+ *
+ * @author Nicholas Racette
+ * @contact: Nick.Racette@century.edu
+ * @since: 11/15/2025
+ *
+ * Course: CSCI 2082-70
+ * Institution: Century College
+ * Instructor: Mathew Nyamgawa
+ */
 public class IntArrayQueue {
     
     // PROPERTIES
-    private int[] data;
+    private int[] data;  // array of integers
     private int front;   // index of front
-    private int rear;
-
+    private int rear;   // index of rear
     private int manyItems;   // number of elements
 
-    // CONSTRUCTOR
-    // Default constructor
+    /**
+     * Default constructor.
+     * Initializes the queue with an initial capacity of 10.
+     */
     public IntArrayQueue() {
         final int INITIAL_CAPACITY = 10;
         this.data = new int[INITIAL_CAPACITY];
         this.manyItems = 0;
     }
 
+    /**
+     * Constructor with specified capacity.
+     * Initializes the queue with the given capacity.
+     *
+     * @param initialCapacity The initial size of the internal array.
+     */
     public IntArrayQueue(int INITIAL_CAPACITY) {
         this.data = new int[INITIAL_CAPACITY];
         this.manyItems = 0;
     }
 
     // MEMBER METHODS
-    //@Override
+    /**
+     * Adds a new item to the rear of the queue.
+     * If the array is full, it calls increaseCapacity() to resize.
+     *
+     * @param item The integer to be added to the queue.
+     */
     public void enqueue(int item) {
         // Check if the Array is full
         if (this.manyItems == data.length) {
@@ -38,9 +62,14 @@ public class IntArrayQueue {
         }
         this.data[this.rear] = item;
         this.manyItems++;
-
-
     }
+
+    /**
+     * Removes and returns the item from the front of the queue.
+     *
+     * @return The integer at the front of the queue.
+     * @throws NoSuchElementException If the queue is empty.
+     */
     public int dequeue() {
         int item;
         // Check if the Array is empty
@@ -56,7 +85,13 @@ public class IntArrayQueue {
         return item;
         
     }
-
+    /**
+     * Calculates the next index in the circular array.
+     * Wraps to 0 if the index reaches the end of the array.
+     *
+     * @param index The current index (e.g., front or rear).
+     * @return The next valid index in the array.
+     */
     public int nextIndex(int index) {
         index = index + 1;
         if (index == this.data.length) {
@@ -67,26 +102,59 @@ public class IntArrayQueue {
         }
     }
 
+    /**
+     * Gets the current index of the front of the queue.
+     *
+     * @return The array index of the front item.
+     */
     public int getFront() {
         return this.front;
     }
 
+    /**
+     * Gets the current index of the rear of the queue.
+     *
+     * @return The array index of the rear item.
+     */
     public int getRear() {
         return this.rear;
     }
 
+    /**
+     * Checks if the queue is empty.
+     *
+     * @return true if the queue has no items, false otherwise.
+     */
     public boolean isEmpty() {
         return this.manyItems == 0;
     }
 
+    /**
+     * Returns the number of items in the queue.
+     *
+     * @return The count of items.
+     */
     public int size() {
         return this.manyItems;
     }
 
+    /**
+     * Returns the total capacity of the internal array.
+     *
+     * @return The length of the data array.
+     */
     public int capacity() {
         return this.data.length;
     }
 
+    /**
+     * Resizes the internal array to a new, larger capacity.
+     * This method correctly handles the "wrap-around" case in a circular
+     * queue by copying the data into a new, linear array.
+     *
+     * @param minCapacity The minimum new capacity required.
+     * @return The new capacity (length of the data array).
+     */
     public int increaseCapacity(int minCapacity) {
         int[] biggerArray;
 
@@ -116,6 +184,11 @@ public class IntArrayQueue {
         return this.data.length;
     }
 
+    /**
+     * Generates a string representation of the queue.
+     *
+     * @return A string showing the array's raw state.
+     */
     public String toString() {
         String result = "";
         if(this.front <= this.rear) {
@@ -131,7 +204,7 @@ public class IntArrayQueue {
                 result += this.data[i] + ", ";
             result += "}\n";
 
-        // Pring starting from this.frong to this.rear
+        // Print starting from this.front to this.rear
             result += "Display Array items only:\n {";
                 for(int i = this.front; i <= this.rear; i++) 
                     result += this.data[i] + ", ";
